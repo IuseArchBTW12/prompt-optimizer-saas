@@ -4,41 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
-import { useState } from "react";
 
 export default function PricingPage() {
   const { user } = useUser();
-  const [loading, setLoading] = useState<string | null>(null);
 
-  const handleUpgrade = async (priceId: string, plan: string) => {
+  const handleUpgrade = (plan: string) => {
     if (!user) {
       // Redirect to sign up if not logged in
       window.location.href = '/sign-up';
       return;
     }
 
-    setLoading(plan);
-
-    try {
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ priceId }),
-      });
-
-      const { url } = await response.json();
-      
-      if (url) {
-        window.location.href = url;
-      }
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      alert('Failed to start checkout. Please try again.');
-    } finally {
-      setLoading(null);
-    }
+    // Redirect to Clerk's billing portal
+    window.location.href = `/account?upgrade=${plan}`;
   };
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black">
@@ -170,13 +148,9 @@ export default function PricingPage() {
             <Button 
               variant="outline" 
               className="w-full border-blue-500/50 hover:bg-blue-500/10"
-              onClick={() => handleUpgrade(
-                process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID!,
-                'starter'
-              )}
-              disabled={loading === 'starter'}
+              onClick={() => handleUpgrade('starter')}
             >
-              {loading === 'starter' ? 'Loading...' : 'Upgrade to Starter'}
+              Upgrade to Starter
             </Button>
           </Card>
 
@@ -237,13 +211,9 @@ export default function PricingPage() {
 
             <Button 
               className="w-full bg-blue-600 hover:bg-blue-700"
-              onClick={() => handleUpgrade(
-                process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID!,
-                'pro'
-              )}
-              disabled={loading === 'pro'}
+              onClick={() => handleUpgrade('pro')}
             >
-              {loading === 'pro' ? 'Loading...' : 'Upgrade to Pro'}
+              Upgrade to Pro
             </Button>
             <p className="text-center text-xs text-zinc-500 mt-3">
               Cancel anytime

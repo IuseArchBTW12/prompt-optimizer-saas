@@ -26,6 +26,8 @@ export default function AccountPage() {
 
       <main className="container mx-auto px-4 py-12 flex justify-center">
         <UserProfile
+          path="/account"
+          routing="path"
           appearance={{
             variables: {
               colorPrimary: "#3b82f6",

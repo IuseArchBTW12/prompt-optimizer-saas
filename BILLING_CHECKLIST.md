@@ -1,77 +1,65 @@
-# Stripe Billing - Quick Start Checklist
+# Clerk Billing - Quick Start Checklist
 
 ## ✅ What's Already Done
 
-- [x] Installed Stripe SDK and dependencies
-- [x] Created `/api/checkout` endpoint for creating payment sessions
-- [x] Created `/api/webhooks/stripe` endpoint for handling subscription events
-- [x] Updated pricing page with working upgrade buttons
-- [x] Added loading states and error handling
-- [x] Created comprehensive setup guide (BILLING_SETUP.md)
-- [x] Updated README with billing information
+- [x] Updated pricing page to redirect to Clerk's billing portal
+- [x] Configured UserProfile to show billing section
+- [x] Created Clerk webhook handler for subscription events
+- [x] Integrated with Convex to update user plans
+- [x] Updated documentation for Clerk billing
 
 ## 🔧 What You Need To Do
 
-### 1. Get Stripe Account and API Keys (5 minutes)
+### 1. Enable Billing in Clerk (5 minutes)
 
-- [ ] Sign up at https://stripe.com (if you don't have an account)
-- [ ] Go to https://dashboard.stripe.com/test/apikeys
-- [ ] Copy your **Secret key** (starts with `sk_test_`)
+- [ ] Go to https://dashboard.clerk.com
+- [ ] Select your application
+- [ ] Navigate to "Billing" or "Monetization" section
+- [ ] Follow the setup wizard (Clerk may require a paid plan for billing features)
+- [ ] Connect your Stripe account (Clerk handles the integration)
+
+### 2. Create Subscription Plans (5 minutes)
+
+- [ ] In Clerk dashboard, create a new subscription plan:
+  - **Starter Plan**:
+    - Name: "Starter"
+    - Price: $12/month
+    - Metadata: Add `plan: starter`
+  
+- [ ] Create another plan:
+  - **Pro Plan**:
+    - Name: "Pro"
+    - Price: $29/month
+    - Metadata: Add `plan: pro`
+
+### 3. Configure Webhooks (2 minutes)
+
+- [ ] In Clerk Dashboard → Webhooks → Add Endpoint
+- [ ] URL: `https://your-domain.com/api/webhooks/clerk`
+  - For local: `http://localhost:3000/api/webhooks/clerk`
+- [ ] Select events: `user.created`, `user.updated`
+- [ ] Copy the webhook signing secret
 - [ ] Add to `.env.local`:
   ```
-  STRIPE_SECRET_KEY=sk_test_your_key_here
+  CLERK_WEBHOOK_SECRET=whsec_your_secret_here
   ```
 
-### 2. Create Products in Stripe (5 minutes)
+### 4. Enable Billing in User Profile (2 minutes)
 
-- [ ] Go to https://dashboard.stripe.com/test/products
-- [ ] Create "PromptFix Starter" product
-  - Price: $12/month (recurring)
-  - Copy the Price ID (starts with `price_`)
-  - Add to `.env.local`: `NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID=price_...`
-- [ ] Create "PromptFix Pro" product
-  - Price: $29/month (recurring)
-  - Copy the Price ID
-  - Add to `.env.local`: `NEXT_PUBLIC_STRIPE_PRO_PRICE_ID=price_...`
-
-### 3. Set Up Webhooks for Local Development (2 minutes)
-
-- [ ] Install Stripe CLI:
-  ```bash
-  brew install stripe/stripe-cli/stripe
-  ```
-- [ ] Login:
-  ```bash
-  stripe login
-  ```
-- [ ] Start webhook forwarding (keep this running):
-  ```bash
-  stripe listen --forward-to localhost:3000/api/webhooks/stripe
-  ```
-- [ ] Copy the webhook secret (starts with `whsec_`)
-- [ ] Add to `.env.local`:
-  ```
-  STRIPE_WEBHOOK_SECRET=whsec_your_secret_here
-  ```
-
-### 4. Add App URL (30 seconds)
-
-- [ ] Add to `.env.local`:
-  ```
-  NEXT_PUBLIC_APP_URL=http://localhost:3000
-  ```
+- [ ] In Clerk Dashboard → User & Authentication → User Profile
+- [ ] Enable the "Billing" section
+- [ ] Save changes
 
 ### 5. Test It! (2 minutes)
 
 - [ ] Restart your dev server: `npm run dev`
-- [ ] In another terminal, run: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`
 - [ ] Go to http://localhost:3000/pricing
-- [ ] Click "Upgrade to Starter"
-- [ ] Use test card: `4242 4242 4242 4242`
-- [ ] Complete checkout
-- [ ] Verify your plan updated in the app
+- [ ] Sign in and click "Upgrade to Starter"
+- [ ] You should see Clerk's billing portal in the account page
+- [ ] Subscribe using test mode
+- [ ] Verify plan updated in your app
 
-## 📋 Your Complete `.env.local` Should Look Like:
+## 📋 Your `.env.local` Should Look Like:
 
 ```env
 # Convex (already set up)
@@ -82,42 +70,37 @@ NEXT_PUBLIC_CONVEX_URL=https://...convex.cloud
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
 
-# OpenAI (already set up)
+# NEW: Clerk Webhook
+CLERK_WEBHOOK_SECRET=whsec_...
+
+# OpenAI (optional)
 OPENAI_API_KEY=sk-...
-
-# NEW: Stripe Billing
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID=price_...
-NEXT_PUBLIC_STRIPE_PRO_PRICE_ID=price_...
-
-# NEW: App URL
-NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
+
+**Note**: You no longer need direct Stripe API keys! Clerk handles all Stripe integration.
 
 ## 🚀 Ready for Production?
 
 When you're ready to deploy:
-- [ ] Follow the "Going to Production" section in BILLING_SETUP.md
-- [ ] Switch to live Stripe keys
-- [ ] Set up production webhook endpoint
+- [ ] Switch Clerk to production mode in dashboard
+- [ ] Update webhook URL to production domain
 - [ ] Test with real (small) payments first
 
 ## 💡 Tips
 
-- **Stripe Dashboard**: Monitor all payments at https://dashboard.stripe.com
-- **Test Cards**: Use `4242 4242 4242 4242` for successful payments
-- **Webhook Events**: Check delivery status in Stripe dashboard > Webhooks
-- **Logs**: Watch your terminal for webhook events and errors
+- **Clerk Dashboard**: Monitor subscriptions in Clerk's billing section
+- **Test Mode**: Clerk provides test cards in their billing portal
+- **Webhook Events**: Check Clerk dashboard → Webhooks → Event Logs
+- **User Metadata**: Plan info is stored in user's `public_metadata.plan`
 
 ## ❓ Need Help?
 
 See [BILLING_SETUP.md](./BILLING_SETUP.md) for:
 - Detailed step-by-step instructions
 - Troubleshooting guide
-- Production deployment checklist
-- Common issues and solutions
+- Alternative approaches if Clerk billing isn't available
 
 ---
 
 **Estimated setup time: ~15 minutes**
+**Note**: Clerk's billing feature may require a paid Clerk plan

@@ -2,6 +2,8 @@ import { Webhook } from 'svix'
 import { headers } from 'next/headers'
 import { WebhookEvent } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+import { ConvexHttpClient } from 'convex/browser'
+import { api } from '@convex/_generated/api'
 
 export async function POST(req: Request) {
   // Get Clerk webhook secret from environment variables
@@ -49,41 +51,40 @@ export async function POST(req: Request) {
 
   // Handle the webhook
   const eventType = evt.type
+  const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
-  // Handle user creation
-  if (eventType === 'user.created') {
-    const { id } = evt.data
-    
-    // Initialize user with free plan
-    try {
-      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-      if (!convexUrl) {
-        console.error('NEXT_PUBLIC_CONVEX_URL not set')
-        return NextResponse.json({ success: false }, { status: 500 })
-      }
-
-      // Call Convex to initialize user
-      // Note: You'll need to expose this as an HTTP action
-      await fetch(`${convexUrl}/updatePlan`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: id,
-          plan: 'free'
-        })
+  try {
+    // Handle user creation - initialize with free plan
+    if (eventType === 'user.created') {
+      const { id } = evt.data
+      
+      await convex.mutation(api.prompts.updatePlan, {
+        userId: id,
+        plan: 'free'
       })
 
       console.log(`User ${id} initialized with free plan`)
-    } catch (error) {
-      console.error('Error initializing user:', error)
     }
-  }
 
-  // Handle subscription updates (when using Clerk's billing)
-  if (eventType === 'subscription.created' || eventType === 'subscription.updated') {
-    // This will be triggered by Clerk's billing system
-    console.log('Subscription event:', evt.data)
-    // You'll need to extract the plan info from evt.data based on Clerk's response
+    // Handle subscription events from Clerk billing
+    if (eventType === 'user.updated') {
+      const { id, public_metadata } = evt.data as any
+      
+      // Check if plan info is in public metadata
+      if (public_metadata?.plan) {
+        const plan = public_metadata.plan as string
+        
+        await convex.mutation(api.prompts.updatePlan, {
+          userId: id,
+          plan: plan
+        })
+
+        console.log(`User ${id} plan updated to ${plan}`)
+      }
+    }
+  } catch (error) {
+    console.error('Error handling webhook:', error)
+    return NextResponse.json({ success: false }, { status: 500 })
   }
 
   return NextResponse.json({ success: true }, { status: 200 })
