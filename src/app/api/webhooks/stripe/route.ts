@@ -4,13 +4,14 @@ import Stripe from 'stripe'
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '@convex/_generated/api'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-12-15.clover',
-})
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
-
 export async function POST(req: Request) {
+  // Initialize Stripe
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2025-12-15.clover',
+  })
+
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
+
   const body = await req.text()
   const signature = (await headers()).get('stripe-signature')!
 
