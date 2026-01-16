@@ -26,7 +26,7 @@ export default function AppPage() {
   const [isOptimizing, setIsOptimizing] = useState(false);
   
   const [settings, setSettings] = useState({
-    targetModel: "gpt-4",
+    targetModel: "claude",
     tone: "technical",
     outputPreference: "detailed",
   });
@@ -87,8 +87,18 @@ export default function AppPage() {
 
   const canOptimize = () => {
     if (!user) return true; // Allow unauthenticated users to try
-    if (usage?.plan === "pro") return true;
-    return (usage?.count || 0) < 10; // Free tier limit
+    if (!usage) return true;
+    
+    // Pro tier: unlimited
+    if (usage.plan === "pro") return true;
+    
+    // Starter tier: 100 per day
+    if (usage.plan === "starter") {
+      return (usage.count || 0) < 100;
+    }
+    
+    // Free tier: 10 per day
+    return (usage.count || 0) < 10;
   };
 
   return (
@@ -102,8 +112,12 @@ export default function AppPage() {
           <div className="flex gap-4 items-center">
             {user ? (
               <>
-                <Badge variant="outline">
-                  {usage?.plan === "pro" ? "Pro" : `${usage?.count || 0}/10 today`}
+                <Badge variant="outline" className="text-sm">
+                  {usage?.plan === "pro" 
+                    ? "Pro - Unlimited" 
+                    : usage?.plan === "starter"
+                    ? `Starter: ${usage?.count || 0}/100 today`
+                    : `Free: ${usage?.count || 0}/10 today`}
                 </Badge>
                 <Link href="/history">
                   <Button variant="ghost">History</Button>
@@ -152,7 +166,6 @@ export default function AppPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="gpt-4">GPT-4</SelectItem>
                   <SelectItem value="claude">Claude</SelectItem>
                   <SelectItem value="generic">Generic</SelectItem>
                 </SelectContent>

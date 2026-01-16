@@ -69,15 +69,15 @@ A web-based SaaS application that helps developers optimize prompts for GPT-styl
      CLERK_SECRET_KEY=sk_test_...
      ```
 
-4. **Set up OpenAI (Optional)**
-   - Get API key from https://platform.openai.com
+4. **Set up Claude API**
+   - Get API key from https://console.anthropic.com
    - Add to `.env.local`:
      ```
-     OPENAI_API_KEY=sk-...
+     ANTHROPIC_API_KEY=sk-ant-api03-...
      ```
    - Note: The app will use a rule-based fallback if no API key is provided
 
-5. **Set up Stripe Billing (Optional)**
+5. **Set up Billing (Optional)**
    - See [BILLING_SETUP.md](./BILLING_SETUP.md) for complete setup instructions
    - Required for accepting payments for Starter/Pro tiers
    - Optional for MVP testing
@@ -103,8 +103,8 @@ NEXT_PUBLIC_CONVEX_URL=
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
 CLERK_SECRET_KEY=
 
-# OpenAI API (optional)
-OPENAI_API_KEY=
+# Anthropic API (Claude)
+ANTHROPIC_API_KEY=
 ```
 
 ## Deployment
@@ -177,7 +177,7 @@ prompt-optimizer-saas/
 ## AI Optimization
 
 The optimization API (`/api/optimize`) uses:
-1. **OpenAI GPT-4**: If `OPENAI_API_KEY` is provided
+1. **Claude Haiku 4.5**: Anthropic's fast, intelligent model for prompt optimization
 2. **Rule-based fallback**: Structured prompt enhancement if no API key
 
 The AI adds:
@@ -186,6 +186,8 @@ The AI adds:
 - Output format instructions
 - Task boundaries
 - Structured, unambiguous language
+
+Model: `claude-haiku-4-5-20251001`
 
 ## Privacy
 

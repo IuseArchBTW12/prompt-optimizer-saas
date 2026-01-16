@@ -16,6 +16,7 @@ export default function HistoryPage() {
     api.prompts.getPromptHistory,
     user ? { userId: user.id } : "skip"
   );
+  const usage = useQuery(api.prompts.getUsage, user ? { userId: user.id } : "skip");
   const deletePrompt = useMutation(api.prompts.deletePrompt);
 
   const handleDelete = async (id: Id<"prompts">) => {
@@ -27,6 +28,80 @@ export default function HistoryPage() {
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     alert("Copied to clipboard!");
+  };
+
+  const handleExportJSON = () => {
+    if (!prompts || prompts.length === 0) {
+      alert("No prompts to export");
+      return;
+    }
+
+    const exportData = prompts.map((p: any) => ({
+      timestamp: new Date(p.timestamp).toISOString(),
+      targetModel: p.settings.targetModel,
+      tone: p.settings.tone,
+      outputPreference: p.settings.outputPreference,
+      originalPrompt: p.originalPrompt,
+      optimizedPrompt: p.optimizedPrompt,
+      explanation: p.explanation || "",
+    }));
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `promptfix-history-${new Date().toISOString().split("T")[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportCSV = () => {
+    if (!prompts || prompts.length === 0) {
+      alert("No prompts to export");
+      return;
+    }
+
+    const headers = [
+      "Timestamp",
+      "Target Model",
+      "Tone",
+      "Output Preference",
+      "Original Prompt",
+      "Optimized Prompt",
+      "Explanation",
+    ];
+
+    const rows = prompts.map((p: any) => [
+      new Date(p.timestamp).toISOString(),
+      p.settings.targetModel,
+      p.settings.tone,
+      p.settings.outputPreference,
+      `"${p.originalPrompt.replace(/"/g, '""')}"`,
+      `"${p.optimizedPrompt.replace(/"/g, '""')}"`,
+      `"${(p.explanation || "").replace(/"/g, '""')}"`,
+    ]);
+
+    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join(
+      "\n"
+    );
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `promptfix-history-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const canExport = () => {
+    return usage?.plan === "starter" || usage?.plan === "pro";
   };
 
   if (!isLoaded) {
@@ -83,11 +158,45 @@ export default function HistoryPage() {
       </header>
 
       <main className="container mx-auto px-4 py-12 max-w-6xl">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Prompt History</h2>
-          <p className="text-zinc-400">
-            View and manage your saved prompt optimizations
-          </p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h2 className="text-3xl font-bold mb-2">Prompt History</h2>
+            <p className="text-zinc-400">
+              View and manage your saved prompt optimizations
+            </p>
+          </div>
+          
+          {prompts && prompts.length > 0 && (
+            <div className="flex gap-2">
+              {canExport() ? (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={handleExportJSON}
+                    className="border-zinc-700"
+                  >
+                    Export JSON
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleExportCSV}
+                    className="border-zinc-700"
+                  >
+                    Export CSV
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  disabled
+                  className="border-zinc-700"
+                  title="Upgrade to Starter or Pro for export functionality"
+                >
+                  Export (Pro Feature)
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         {!prompts || prompts.length === 0 ? (
