@@ -143,13 +143,14 @@ export default function AppPage() {
 
       <main className="container mx-auto px-4 py-12 max-w-7xl">
         <motion.div 
-          className="mb-8"
+          className="mb-8 relative"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-3xl font-bold mb-2">Optimize Your Prompt</h2>
-          <p className="text-zinc-400">
+          <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+          <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 text-transparent bg-clip-text relative z-10">✨ Optimize Your Prompt</h2>
+          <p className="text-zinc-400 relative z-10">
             Transform your prompts into more effective, structured instructions
           </p>
         </motion.div>
@@ -159,9 +160,11 @@ export default function AppPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
+          className="relative"
         >
-          <Card className="p-6 bg-zinc-900 border-zinc-800 mb-6">
-          <h3 className="font-semibold mb-4">Settings</h3>
+          <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg blur-xl" />
+          <Card className="p-6 bg-gradient-to-br from-zinc-900 to-zinc-900/95 border-zinc-800 mb-6 relative shadow-2xl">
+          <h3 className="font-semibold mb-4 flex items-center gap-2">⚙️ Settings</h3>
           <div className="grid md:grid-cols-3 gap-4">
             <div>
               <label className="text-sm text-zinc-400 mb-2 block">
@@ -231,9 +234,11 @@ export default function AppPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
+          className="relative"
         >
-          <Card className="p-6 bg-zinc-900 border-zinc-800 mb-6">
-          <label className="font-semibold mb-3 block">Original Prompt</label>
+          <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-lg blur-xl" />
+          <Card className="p-6 bg-gradient-to-br from-zinc-900 to-zinc-900/95 border-zinc-800 mb-6 relative shadow-2xl">
+          <label className="font-semibold mb-3 block flex items-center gap-2">📝 Original Prompt</label>
           <Textarea
             value={originalPrompt}
             onChange={(e) => setOriginalPrompt(e.target.value)}
@@ -252,7 +257,7 @@ export default function AppPage() {
                 onClick={handleOptimize}
                 disabled={!originalPrompt.trim() || isOptimizing || !canOptimize()}
                 size="lg"
-                className="relative overflow-hidden"
+                className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 shadow-lg shadow-blue-500/25"
               >
                 {isOptimizing && (
                   <motion.div
@@ -297,9 +302,9 @@ export default function AppPage() {
             </TabsList>
 
             <TabsContent value="result" className="mt-6">
-              <Card className="p-6 bg-zinc-900 border-zinc-800">
+              <Card className="p-6 bg-gradient-to-br from-zinc-900 to-zinc-900/95 border-zinc-800 shadow-2xl">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-semibold">Optimized Prompt</h3>
+                  <h3 className="font-semibold flex items-center gap-2">🚀 Optimized Prompt</h3>
                   <Button onClick={handleCopy} variant="outline">
                     Copy to Clipboard
                   </Button>
@@ -340,14 +345,16 @@ export default function AppPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4 }}
+                  className="relative"
                 >
-                  <Card className="p-6 bg-zinc-900 border-zinc-800">
+                  <div className="absolute -inset-1 bg-red-500/10 rounded-lg blur-xl" />
+                  <Card className="p-6 bg-gradient-to-br from-zinc-900 via-red-950/20 to-zinc-900 border-red-900/30 relative shadow-2xl">
                     <div className="flex items-center gap-2 mb-4">
-                      <Badge variant="outline" className="bg-red-950 text-red-400">
-                        Before
+                      <Badge variant="outline" className="bg-red-950 text-red-400 border-red-800">
+                        ❌ Before
                       </Badge>
                     </div>
-                    <div className="bg-black p-4 rounded-lg border border-zinc-800">
+                    <div className="bg-black/50 p-4 rounded-lg border border-red-900/30">
                       <pre className="text-zinc-300 whitespace-pre-wrap font-mono text-sm">
                         {originalPrompt}
                       </pre>
@@ -359,14 +366,16 @@ export default function AppPage() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, delay: 0.1 }}
+                  className="relative"
                 >
-                  <Card className="p-6 bg-zinc-900 border-zinc-800">
+                  <div className="absolute -inset-1 bg-green-500/10 rounded-lg blur-xl" />
+                  <Card className="p-6 bg-gradient-to-br from-zinc-900 via-green-950/20 to-zinc-900 border-green-900/30 relative shadow-2xl">
                     <div className="flex items-center gap-2 mb-4">
-                      <Badge variant="outline" className="bg-green-950 text-green-400">
-                        After
+                      <Badge variant="outline" className="bg-green-950 text-green-400 border-green-800">
+                        ✅ After
                       </Badge>
                     </div>
-                    <div className="bg-black p-4 rounded-lg border border-zinc-800">
+                    <div className="bg-black/50 p-4 rounded-lg border border-green-900/30">
                       <pre className="text-zinc-300 whitespace-pre-wrap font-mono text-sm">
                         {optimizedPrompt}
                       </pre>
