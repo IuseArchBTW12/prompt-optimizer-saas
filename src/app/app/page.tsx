@@ -17,6 +17,7 @@ import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AppPage() {
   const { user } = useUser();
@@ -141,15 +142,25 @@ export default function AppPage() {
       </header>
 
       <main className="container mx-auto px-4 py-12 max-w-7xl">
-        <div className="mb-8">
+        <motion.div 
+          className="mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <h2 className="text-3xl font-bold mb-2">Optimize Your Prompt</h2>
           <p className="text-zinc-400">
             Transform your prompts into more effective, structured instructions
           </p>
-        </div>
+        </motion.div>
 
         {/* Settings Panel */}
-        <Card className="p-6 bg-zinc-900 border-zinc-800 mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <Card className="p-6 bg-zinc-900 border-zinc-800 mb-6">
           <h3 className="font-semibold mb-4">Settings</h3>
           <div className="grid md:grid-cols-3 gap-4">
             <div>
@@ -213,9 +224,15 @@ export default function AppPage() {
             </div>
           </div>
         </Card>
+        </motion.div>
 
         {/* Input Section */}
-        <Card className="p-6 bg-zinc-900 border-zinc-800 mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Card className="p-6 bg-zinc-900 border-zinc-800 mb-6">
           <label className="font-semibold mb-3 block">Original Prompt</label>
           <Textarea
             value={originalPrompt}
@@ -227,23 +244,52 @@ export default function AppPage() {
             <div className="text-sm text-zinc-500">
               {originalPrompt.length} characters
             </div>
-            <Button
-              onClick={handleOptimize}
-              disabled={!originalPrompt.trim() || isOptimizing || !canOptimize()}
-              size="lg"
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              {isOptimizing ? "Optimizing..." : "Optimize Prompt"}
-            </Button>
+              <Button
+                onClick={handleOptimize}
+                disabled={!originalPrompt.trim() || isOptimizing || !canOptimize()}
+                size="lg"
+                className="relative overflow-hidden"
+              >
+                {isOptimizing && (
+                  <motion.div
+                    className="absolute inset-0 bg-blue-500/20"
+                    initial={{ x: "-100%" }}
+                    animate={{ x: "100%" }}
+                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                  />
+                )}
+                <span className="relative z-10">
+                  {isOptimizing ? "Optimizing..." : "Optimize Prompt"}
+                </span>
+              </Button>
+            </motion.div>
           </div>
           {!canOptimize() && (
-            <div className="mt-2 text-sm text-yellow-500">
+            <motion.div 
+              className="mt-2 text-sm text-yellow-500"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
               Daily limit reached. Upgrade to Pro for unlimited optimizations.
-            </div>
+            </motion.div>
           )}
         </Card>
+        </motion.div>
 
         {/* Results Section */}
+        <AnimatePresence mode="wait">
         {optimizedPrompt && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -40 }}
+            transition={{ duration: 0.5 }}
+          >
           <Tabs defaultValue="result" className="w-full">
             <TabsList className="grid w-full grid-cols-2 max-w-md">
               <TabsTrigger value="result">Optimized Prompt</TabsTrigger>
@@ -290,35 +336,49 @@ export default function AppPage() {
 
             <TabsContent value="comparison" className="mt-6">
               <div className="grid md:grid-cols-2 gap-6">
-                <Card className="p-6 bg-zinc-900 border-zinc-800">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Badge variant="outline" className="bg-red-950 text-red-400">
-                      Before
-                    </Badge>
-                  </div>
-                  <div className="bg-black p-4 rounded-lg border border-zinc-800">
-                    <pre className="text-zinc-300 whitespace-pre-wrap font-mono text-sm">
-                      {originalPrompt}
-                    </pre>
-                  </div>
-                </Card>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <Card className="p-6 bg-zinc-900 border-zinc-800">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Badge variant="outline" className="bg-red-950 text-red-400">
+                        Before
+                      </Badge>
+                    </div>
+                    <div className="bg-black p-4 rounded-lg border border-zinc-800">
+                      <pre className="text-zinc-300 whitespace-pre-wrap font-mono text-sm">
+                        {originalPrompt}
+                      </pre>
+                    </div>
+                  </Card>
+                </motion.div>
 
-                <Card className="p-6 bg-zinc-900 border-zinc-800">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Badge variant="outline" className="bg-green-950 text-green-400">
-                      After
-                    </Badge>
-                  </div>
-                  <div className="bg-black p-4 rounded-lg border border-zinc-800">
-                    <pre className="text-zinc-300 whitespace-pre-wrap font-mono text-sm">
-                      {optimizedPrompt}
-                    </pre>
-                  </div>
-                </Card>
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                >
+                  <Card className="p-6 bg-zinc-900 border-zinc-800">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Badge variant="outline" className="bg-green-950 text-green-400">
+                        After
+                      </Badge>
+                    </div>
+                    <div className="bg-black p-4 rounded-lg border border-zinc-800">
+                      <pre className="text-zinc-300 whitespace-pre-wrap font-mono text-sm">
+                        {optimizedPrompt}
+                      </pre>
+                    </div>
+                  </Card>
+                </motion.div>
               </div>
             </TabsContent>
           </Tabs>
+          </motion.div>
         )}
+        </AnimatePresence>
       </main>
     </div>
   );
