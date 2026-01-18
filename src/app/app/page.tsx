@@ -25,6 +25,9 @@ export default function AppPage() {
   const [optimizedPrompt, setOptimizedPrompt] = useState("");
   const [explanation, setExplanation] = useState("");
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [originalScore, setOriginalScore] = useState<number | null>(null);
+  const [optimizedScore, setOptimizedScore] = useState<number | null>(null);
+  const [scoreBreakdown, setScoreBreakdown] = useState<any>(null);
   
   const [settings, setSettings] = useState({
     targetModel: "claude",
@@ -61,6 +64,9 @@ export default function AppPage() {
 
       setOptimizedPrompt(data.optimizedPrompt);
       setExplanation(data.explanation);
+      setOriginalScore(data.originalScore || null);
+      setOptimizedScore(data.optimizedScore || null);
+      setScoreBreakdown(data.scoreBreakdown || null);
 
       // Track usage and save if user is logged in
       if (user) {
@@ -303,6 +309,89 @@ export default function AppPage() {
 
             <TabsContent value="result" className="mt-6">
               <Card className="p-6 bg-gradient-to-br from-zinc-900 to-zinc-900/95 border-zinc-800 shadow-2xl">
+                {/* Quality Score Display */}
+                {(originalScore !== null && optimizedScore !== null) && (
+                  <motion.div 
+                    className="mb-6 p-4 bg-gradient-to-r from-blue-950/30 to-purple-950/30 border border-blue-900/30 rounded-lg"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    <h4 className="text-sm font-semibold mb-3 text-blue-300">📊 Quality Score</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {/* Original Score */}
+                      <div className="space-y-2">
+                        <div className="text-xs text-zinc-400">Before</div>
+                        <div className="flex items-end gap-2">
+                          <span className="text-4xl font-bold text-red-400">{originalScore}</span>
+                          <span className="text-zinc-500 mb-1">/100</span>
+                        </div>
+                        <div className="w-full bg-zinc-800 rounded-full h-2">
+                          <motion.div 
+                            className="bg-red-500 h-2 rounded-full"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${originalScore}%` }}
+                            transition={{ duration: 0.6, delay: 0.2 }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Optimized Score */}
+                      <div className="space-y-2">
+                        <div className="text-xs text-zinc-400">After</div>
+                        <div className="flex items-end gap-2">
+                          <span className="text-4xl font-bold text-green-400">{optimizedScore}</span>
+                          <span className="text-zinc-500 mb-1">/100</span>
+                        </div>
+                        <div className="w-full bg-zinc-800 rounded-full h-2">
+                          <motion.div 
+                            className="bg-green-500 h-2 rounded-full"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${optimizedScore}%` }}
+                            transition={{ duration: 0.6, delay: 0.3 }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Improvement Badge */}
+                    <div className="mt-4 flex items-center gap-2">
+                      <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
+                        +{optimizedScore - originalScore} points improvement
+                      </Badge>
+                      <span className="text-xs text-zinc-400">
+                        ({Math.round(((optimizedScore - originalScore) / originalScore) * 100)}% increase)
+                      </span>
+                    </div>
+
+                    {/* Score Breakdown */}
+                    {scoreBreakdown && (
+                      <details className="mt-4">
+                        <summary className="text-xs text-zinc-400 cursor-pointer hover:text-zinc-300">
+                          View detailed breakdown
+                        </summary>
+                        <div className="mt-3 space-y-2">
+                          {Object.entries(scoreBreakdown.original).map(([key, value]: [string, any]) => (
+                            <div key={key} className="flex items-center gap-3 text-xs">
+                              <span className="w-28 text-zinc-400 capitalize">
+                                {key === 'outputFormat' ? 'Output Format' : key}:
+                              </span>
+                              <div className="flex-1 flex gap-2 items-center">
+                                <div className="w-12 text-red-400">{value}</div>
+                                <div className="text-zinc-600">→</div>
+                                <div className="w-12 text-green-400">{scoreBreakdown.optimized[key]}</div>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  +{scoreBreakdown.optimized[key] - value}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+                  </motion.div>
+                )}
+
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-semibold flex items-center gap-2">🚀 Optimized Prompt</h3>
                   <Button onClick={handleCopy} variant="outline">
@@ -331,6 +420,9 @@ export default function AppPage() {
                       setOriginalPrompt(optimizedPrompt);
                       setOptimizedPrompt("");
                       setExplanation("");
+                      setOriginalScore(null);
+                      setOptimizedScore(null);
+                      setScoreBreakdown(null);
                     }}
                   >
                     Refine Again
