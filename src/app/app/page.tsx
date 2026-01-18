@@ -71,12 +71,21 @@ export default function AppPage() {
       // Track usage and save if user is logged in
       if (user) {
         await trackUsage({ userId: user.id });
+        
+        // Estimate token counts (rough approximation: ~4 chars per token)
+        const originalTokens = Math.ceil(originalPrompt.length / 4);
+        const optimizedTokens = Math.ceil(data.optimizedPrompt.length / 4);
+        
         await savePrompt({
           userId: user.id,
           originalPrompt,
           optimizedPrompt: data.optimizedPrompt,
           settings,
           explanation: data.explanation,
+          originalScore: data.originalScore,
+          optimizedScore: data.optimizedScore,
+          originalTokens,
+          optimizedTokens,
         });
       }
     } catch (error) {
@@ -126,6 +135,9 @@ export default function AppPage() {
                     ? `Starter: ${usage?.count || 0}/100 today`
                     : `Free: ${usage?.count || 0}/10 today`}
                 </Badge>
+                <Link href="/insights">
+                  <Button variant="ghost">Insights</Button>
+                </Link>
                 <Link href="/history">
                   <Button variant="ghost">History</Button>
                 </Link>
