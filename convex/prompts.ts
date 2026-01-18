@@ -240,3 +240,127 @@ export const getInsights = query({
     };
   },
 });
+
+// Toggle favorite status
+export const toggleFavorite = mutation({
+  args: {
+    promptId: v.id("prompts"),
+  },
+  handler: async (ctx, args) => {
+    const prompt = await ctx.db.get(args.promptId);
+    if (!prompt) throw new Error("Prompt not found");
+    
+    await ctx.db.patch(args.promptId, {
+      isFavorite: !prompt.isFavorite,
+    });
+    
+    return !prompt.isFavorite;
+  },
+});
+
+// Add tag to prompt
+export const addTag = mutation({
+  args: {
+    promptId: v.id("prompts"),
+    tag: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const prompt = await ctx.db.get(args.promptId);
+    if (!prompt) throw new Error("Prompt not found");
+    
+    const currentTags = prompt.tags || [];
+    const normalizedTag = args.tag.toLowerCase().trim();
+    
+    if (!currentTags.includes(normalizedTag)) {
+      await ctx.db.patch(args.promptId, {
+        tags: [...currentTags, normalizedTag],
+      });
+    }
+    
+    return [...currentTags, normalizedTag];
+  },
+});
+
+// Remove tag from prompt
+export const removeTag = mutation({
+  args: {
+    promptId: v.id("prompts"),
+    tag: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const prompt = await ctx.db.get(args.promptId);
+    if (!prompt) throw new Error("Prompt not found");
+    
+    const currentTags = prompt.tags || [];
+    const updatedTags = currentTags.filter(t => t !== args.tag);
+    
+    await ctx.db.patch(args.promptId, {
+      tags: updatedTags,
+    });
+    
+    return updatedTags;
+  },
+});
+
+// Get all unique tags for a user
+export const getUserTags = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const prompts = await ctx.db
+      .query("prompts")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+    
+    const tagsSet = new Set<string>();
+    prompts.forEach(prompt => {
+      if (prompt.tags) {
+        prompt.tags.forEach(tag => tagsSet.add(tag));
+      }
+    });
+    
+    return Array.from(tagsSet).sort();
+  },
+});
+
+// Get filtered prompts (by favorites, tags, search)
+export const getFilteredPrompts = query({
+  args: {
+    userId: v.string(),
+    showFavoritesOnly: v.optional(v.boolean()),
+    filterTags: v.optional(v.array(v.string())),
+    searchQuery: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    let prompts = await ctx.db
+      .query("prompts")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .collect();
+    
+    // Filter by favorites
+    if (args.showFavoritesOnly) {
+      prompts = prompts.filter(p => p.isFavorite === true);
+    }
+    
+    // Filter by tags
+    if (args.filterTags && args.filterTags.length > 0) {
+      prompts = prompts.filter(p => {
+        if (!p.tags) return false;
+        return args.filterTags!.some(tag => p.tags!.includes(tag));
+      });
+    }
+    
+    // Filter by search query
+    if (args.searchQuery && args.searchQuery.trim()) {
+      const query = args.searchQuery.toLowerCase();
+      prompts = prompts.filter(p => 
+        p.originalPrompt.toLowerCase().includes(query) ||
+        p.optimizedPrompt.toLowerCase().includes(query) ||
+        (p.explanation && p.explanation.toLowerCase().includes(query)) ||
+        (p.tags && p.tags.some(tag => tag.includes(query)))
+      );
+    }
+    
+    return prompts.slice(0, 100);
+  },
+});

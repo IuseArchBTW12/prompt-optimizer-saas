@@ -17,12 +17,15 @@ export default defineSchema({
     scoreImprovement: v.optional(v.number()),
     originalTokens: v.optional(v.number()),
     optimizedTokens: v.optional(v.number()),
+    isFavorite: v.optional(v.boolean()),
+    tags: v.optional(v.array(v.string())),
     timestamp: v.number(),
   })
     .index("by_user", ["userId"])
     .index("by_timestamp", ["timestamp"])
     .index("by_user_and_timestamp", ["userId", "timestamp"])
-    .index("by_improvement", ["userId", "scoreImprovement"]),
+    .index("by_improvement", ["userId", "scoreImprovement"])
+    .index("by_favorite", ["userId", "isFavorite"]),
 
   usage: defineTable({
     userId: v.string(),
