@@ -187,7 +187,7 @@ export default function Home() {
           </h3>
           
           <motion.div 
-            className="grid md:grid-cols-3 gap-8"
+            className="grid md:grid-cols-4 gap-6"
             variants={staggerContainer}
             initial="initial"
             whileInView="animate"
@@ -209,6 +209,16 @@ export default function Home() {
                 <h4 className="text-xl font-semibold mb-2">AI Optimization</h4>
                 <p className="text-zinc-400">
                   Our AI analyzes and rewrites your prompt using best practices
+                </p>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 bg-zinc-900 border-zinc-800 hover:scale-105 transition-transform duration-300">
+                <div className="text-3xl mb-4">📊</div>
+                <h4 className="text-xl font-semibold mb-2">Quality Score</h4>
+                <p className="text-zinc-400">
+                  See exact improvement metrics across 5 criteria
                 </p>
               </Card>
             </motion.div>
@@ -289,7 +299,35 @@ export default function Home() {
             <motion.div variants={fadeInUp}>
               <Card className="p-6 bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-all">
                 <div className="flex items-start gap-4">
-                  <div className="text-2xl">🔒</div>
+                  <div className="text-2xl">�</div>
+                  <div>
+                    <h4 className="text-lg font-semibold mb-2">Track Your Progress</h4>
+                    <p className="text-zinc-400 text-sm">
+                      Analytics dashboard showing improvements, token savings, and optimization patterns over time
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-all">
+                <div className="flex items-start gap-4">
+                  <div className="text-2xl">⭐</div>
+                  <div>
+                    <h4 className="text-lg font-semibold mb-2">Organize & Reuse</h4>
+                    <p className="text-zinc-400 text-sm">
+                      Favorite prompts, add custom tags, and search your history to quickly find successful patterns
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-all">
+                <div className="flex items-start gap-4">
+                  <div className="text-2xl">�🔒</div>
                   <div>
                     <h4 className="text-lg font-semibold mb-2">Privacy First</h4>
                     <p className="text-zinc-400 text-sm">
@@ -339,7 +377,11 @@ export default function Home() {
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-green-500">✓</span>
-                    <span className="text-zinc-300">All optimization settings</span>
+                    <span className="text-zinc-300">Quality scores & explanations</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-500">✓</span>
+                    <span className="text-zinc-300">Favorites & tags</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-green-500">✓</span>
@@ -347,7 +389,7 @@ export default function Home() {
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-green-500">✓</span>
-                    <span className="text-zinc-300">AI-generated explanations</span>
+                    <span className="text-zinc-300">Basic insights dashboard</span>
                   </li>
                 </ul>
                 <Link href="/sign-up">

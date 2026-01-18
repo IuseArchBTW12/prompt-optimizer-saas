@@ -69,7 +69,7 @@ export default function PricingPage() {
               </li>
               <li className="flex items-start gap-2">
                 <div className="text-green-500 mt-0.5">✓</div>
-                <span className="text-zinc-300">All optimization settings</span>
+                <span className="text-zinc-300">Quality score analysis</span>
               </li>
               <li className="flex items-start gap-2">
                 <div className="text-green-500 mt-0.5">✓</div>
@@ -81,15 +81,23 @@ export default function PricingPage() {
               </li>
               <li className="flex items-start gap-2">
                 <div className="text-green-500 mt-0.5">✓</div>
+                <span className="text-zinc-300">Favorites & tags</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="text-green-500 mt-0.5">✓</div>
                 <span className="text-zinc-300">7-day prompt history</span>
               </li>
               <li className="flex items-start gap-2">
-                <div className="text-zinc-600 mt-0.5">✗</div>
-                <span className="text-zinc-500">Priority support</span>
+                <div className="text-green-500 mt-0.5">✓</div>
+                <span className="text-zinc-300">Basic insights dashboard</span>
               </li>
               <li className="flex items-start gap-2">
                 <div className="text-zinc-600 mt-0.5">✗</div>
                 <span className="text-zinc-500">Export functionality</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="text-zinc-600 mt-0.5">✗</div>
+                <span className="text-zinc-500">Priority support</span>
               </li>
             </ul>
 
@@ -121,7 +129,7 @@ export default function PricingPage() {
               </li>
               <li className="flex items-start gap-2">
                 <div className="text-green-500 mt-0.5">✓</div>
-                <span className="text-zinc-300">All optimization settings</span>
+                <span className="text-zinc-300">Quality score analysis</span>
               </li>
               <li className="flex items-start gap-2">
                 <div className="text-green-500 mt-0.5">✓</div>
@@ -133,7 +141,15 @@ export default function PricingPage() {
               </li>
               <li className="flex items-start gap-2">
                 <div className="text-green-500 mt-0.5">✓</div>
+                <span className="text-zinc-300">Favorites & tags</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="text-green-500 mt-0.5">✓</div>
                 <span className="text-zinc-300">30-day prompt history</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="text-green-500 mt-0.5">✓</div>
+                <span className="text-zinc-300">Full insights dashboard</span>
               </li>
               <li className="flex items-start gap-2">
                 <div className="text-green-500 mt-0.5">✓</div>
@@ -181,7 +197,7 @@ export default function PricingPage() {
               </li>
               <li className="flex items-start gap-2">
                 <div className="text-green-500 mt-0.5">✓</div>
-                <span className="text-zinc-300">All optimization settings</span>
+                <span className="text-zinc-300">Quality score analysis</span>
               </li>
               <li className="flex items-start gap-2">
                 <div className="text-green-500 mt-0.5">✓</div>
@@ -193,7 +209,15 @@ export default function PricingPage() {
               </li>
               <li className="flex items-start gap-2">
                 <div className="text-green-500 mt-0.5">✓</div>
+                <span className="text-zinc-300">Favorites & tags</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="text-green-500 mt-0.5">✓</div>
                 <span className="text-zinc-300">Unlimited prompt history</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="text-green-500 mt-0.5">✓</div>
+                <span className="text-zinc-300">Full insights dashboard</span>
               </li>
               <li className="flex items-start gap-2">
                 <div className="text-green-500 mt-0.5">✓</div>
@@ -202,10 +226,6 @@ export default function PricingPage() {
               <li className="flex items-start gap-2">
                 <div className="text-green-500 mt-0.5">✓</div>
                 <span className="text-zinc-300">Priority email support</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <div className="text-green-500 mt-0.5">✓</div>
-                <span className="text-zinc-300">Usage analytics</span>
               </li>
             </ul>
 
