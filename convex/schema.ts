@@ -33,4 +33,24 @@ export default defineSchema({
     lastReset: v.number(),
     plan: v.string(),
   }).index("by_user", ["userId"]),
+
+  communityPrompts: defineTable({
+    userId: v.string(),
+    userName: v.string(),
+    userAvatar: v.optional(v.string()),
+    originalPrompt: v.string(),
+    optimizedPrompt: v.string(),
+    settings: v.object({
+      targetModel: v.string(),
+      tone: v.string(),
+      outputPreference: v.string(),
+    }),
+    scoreImprovement: v.optional(v.number()),
+    likes: v.array(v.string()), // Array of userIds who liked
+    likeCount: v.number(),
+    timestamp: v.number(),
+  })
+    .index("by_timestamp", ["timestamp"])
+    .index("by_likes", ["likeCount"])
+    .index("by_user", ["userId"]),
 });

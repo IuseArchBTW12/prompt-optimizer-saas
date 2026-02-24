@@ -364,3 +364,90 @@ export const getFilteredPrompts = query({
     return prompts.slice(0, 100);
   },
 });
+
+// ============= COMMUNITY FEATURES =============
+
+// Post a prompt to the community
+export const postToCommunity = mutation({
+  args: {
+    userId: v.string(),
+    userName: v.string(),
+    userAvatar: v.optional(v.string()),
+    originalPrompt: v.string(),
+    optimizedPrompt: v.string(),
+    settings: v.object({
+      targetModel: v.string(),
+      tone: v.string(),
+      outputPreference: v.string(),
+    }),
+    scoreImprovement: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const postId = await ctx.db.insert("communityPrompts", {
+      ...args,
+      likes: [],
+      likeCount: 0,
+      timestamp: Date.now(),
+    });
+    return postId;
+  },
+});
+
+// Get community feed (all shared prompts)
+export const getCommunityFeed = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 50;
+    const posts = await ctx.db
+      .query("communityPrompts")
+      .withIndex("by_timestamp")
+      .order("desc")
+      .take(limit);
+    return posts;
+  },
+});
+
+// Toggle like on a community post
+export const toggleCommunityLike = mutation({
+  args: {
+    postId: v.id("communityPrompts"),
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const post = await ctx.db.get(args.postId);
+    if (!post) throw new Error("Post not found");
+
+    const hasLiked = post.likes.includes(args.userId);
+    
+    if (hasLiked) {
+      // Remove like
+      await ctx.db.patch(args.postId, {
+        likes: post.likes.filter(id => id !== args.userId),
+        likeCount: post.likeCount - 1,
+      });
+    } else {
+      // Add like
+      await ctx.db.patch(args.postId, {
+        likes: [...post.likes, args.userId],
+        likeCount: post.likeCount + 1,
+      });
+    }
+    
+    return !hasLiked; // Return new liked state
+  },
+});
+
+// Get user's community posts
+export const getUserCommunityPosts = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const posts = await ctx.db
+      .query("communityPrompts")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(50);
+    return posts;
+  },
+});

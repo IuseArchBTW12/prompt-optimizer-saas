@@ -195,6 +195,12 @@ export default function HistoryPage() {
             <Link href="/app">
               <Button variant="ghost">Optimize</Button>
             </Link>
+            <Link href="/insights">
+              <Button variant="ghost">Insights</Button>
+            </Link>
+            <Link href="/community">
+              <Button variant="ghost">Community</Button>
+            </Link>
             <Link href="/account">
               <Button variant="outline">Account</Button>
             </Link>

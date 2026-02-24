@@ -19,6 +19,75 @@ import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Prompt templates
+const PROMPT_TEMPLATES = [
+  {
+    name: "Code Review",
+    category: "Development",
+    icon: "🔍",
+    prompt: "Review the following code for:\n- Potential bugs or errors\n- Performance issues\n- Security vulnerabilities\n- Code style and best practices\n- Suggestions for improvement\n\n[Paste your code here]"
+  },
+  {
+    name: "Documentation Generator",
+    category: "Development",
+    icon: "📚",
+    prompt: "Generate comprehensive documentation for the following code. Include:\n- Purpose and overview\n- Function/method descriptions\n- Parameters and return values\n- Usage examples\n- Edge cases and limitations\n\n[Paste your code here]"
+  },
+  {
+    name: "Bug Analysis",
+    category: "Development",
+    icon: "🐛",
+    prompt: "Analyze the following bug report and code:\n\nBug Description: [Describe the bug]\n\nProvide:\n1. Root cause analysis\n2. Step-by-step debugging approach\n3. Potential fixes\n4. Prevention strategies\n\n[Paste relevant code here]"
+  },
+  {
+    name: "API Design",
+    category: "Development",
+    icon: "🔌",
+    prompt: "Design a RESTful API for: [Your feature/service]\n\nRequirements:\n- List endpoints with HTTP methods\n- Request/response schemas\n- Authentication approach\n- Error handling strategy\n- Rate limiting considerations"
+  },
+  {
+    name: "Test Case Generation",
+    category: "Development",
+    icon: "✅",
+    prompt: "Generate comprehensive test cases for the following functionality:\n\n[Describe the feature/function]\n\nInclude:\n- Unit tests\n- Integration tests\n- Edge cases\n- Error scenarios\n- Expected inputs and outputs"
+  },
+  {
+    name: "Explain Like I'm 5",
+    category: "Education",
+    icon: "🎓",
+    prompt: "Explain the following concept in simple terms that a beginner can understand:\n\n[Topic or concept]\n\nUse:\n- Simple analogies\n- Real-world examples\n- No jargon\n- Step-by-step breakdown"
+  },
+  {
+    name: "Technical Writer",
+    category: "Content",
+    icon: "✍️",
+    prompt: "Write a technical article about: [Topic]\n\nTarget Audience: [e.g., developers, beginners, etc.]\n\nInclude:\n- Clear introduction\n- Main concepts explained\n- Code examples\n- Best practices\n- Conclusion and next steps"
+  },
+  {
+    name: "SQL Query Builder",
+    category: "Development",
+    icon: "🗄️",
+    prompt: "Create an SQL query to:\n\n[Describe what you need to query]\n\nDatabase schema:\n[Describe tables and relationships]\n\nProvide:\n- Optimized query\n- Explanation of each part\n- Index recommendations\n- Potential performance issues"
+  }
+];
+
+// Token counting utility (rough estimate: ~4 chars per token)
+const estimateTokens = (text: string): number => {
+  return Math.ceil(text.length / 4);
+};
+
+// Cost estimation (per 1K tokens)
+const PRICING = {
+  gpt4: { input: 0.03, output: 0.06 },
+  claude: { input: 0.008, output: 0.024 },
+  generic: { input: 0.01, output: 0.03 }
+};
+
+const estimateCost = (tokens: number, model: string): number => {
+  const pricing = PRICING[model as keyof typeof PRICING] || PRICING.generic;
+  return (tokens / 1000) * pricing.input;
+};
+
 export default function AppPage() {
   const { user } = useUser();
   const [originalPrompt, setOriginalPrompt] = useState("");
@@ -28,6 +97,7 @@ export default function AppPage() {
   const [originalScore, setOriginalScore] = useState<number | null>(null);
   const [optimizedScore, setOptimizedScore] = useState<number | null>(null);
   const [scoreBreakdown, setScoreBreakdown] = useState<any>(null);
+  const [showTemplates, setShowTemplates] = useState(false);
   
   const [settings, setSettings] = useState({
     targetModel: "claude",
@@ -37,6 +107,7 @@ export default function AppPage() {
 
   const savePrompt = useMutation(api.prompts.savePrompt);
   const trackUsage = useMutation(api.prompts.trackUsage);
+  const postToCommunity = useMutation(api.prompts.postToCommunity);
   const usage = useQuery(api.prompts.getUsage, user ? { userId: user.id } : "skip");
 
   const handleOptimize = async () => {
@@ -101,6 +172,26 @@ export default function AppPage() {
     alert("Copied to clipboard!");
   };
 
+  const handleShareToCommunity = async () => {
+    if (!user || !optimizedPrompt) return;
+
+    try {
+      await postToCommunity({
+        userId: user.id,
+        userName: user.fullName || user.username || "Anonymous",
+        userAvatar: user.imageUrl,
+        originalPrompt,
+        optimizedPrompt,
+        settings,
+        scoreImprovement: optimizedScore && originalScore ? optimizedScore - originalScore : undefined,
+      });
+      alert("✅ Shared to Community!");
+    } catch (error) {
+      console.error("Failed to share:", error);
+      alert("Failed to share. Please try again.");
+    }
+  };
+
   const canOptimize = () => {
     if (!user) return true; // Allow unauthenticated users to try
     if (!usage) return true;
@@ -137,6 +228,9 @@ export default function AppPage() {
                 </Badge>
                 <Link href="/insights">
                   <Button variant="ghost">Insights</Button>
+                </Link>
+                <Link href="/community">
+                  <Button variant="ghost">Community</Button>
                 </Link>
                 <Link href="/history">
                   <Button variant="ghost">History</Button>
@@ -256,16 +350,77 @@ export default function AppPage() {
         >
           <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-lg blur-xl" />
           <Card className="p-6 bg-gradient-to-br from-zinc-900 to-zinc-900/95 border-zinc-800 mb-6 relative shadow-2xl">
-          <label className="font-semibold mb-3 block flex items-center gap-2">📝 Original Prompt</label>
+          <div className="flex justify-between items-center mb-3">
+            <label className="font-semibold flex items-center gap-2">📝 Original Prompt</label>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTemplates(!showTemplates)}
+              className="text-xs"
+            >
+              {showTemplates ? "Hide" : "📋 Templates"}
+            </Button>
+          </div>
+
+          {/* Template Library */}
+          <AnimatePresence>
+            {showTemplates && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-4 overflow-hidden"
+              >
+                <div className="bg-black/50 p-4 rounded-lg border border-zinc-800">
+                  <h4 className="text-sm font-semibold mb-3 text-zinc-300">Quick Start Templates</h4>
+                  <div className="grid md:grid-cols-2 gap-2">
+                    {PROMPT_TEMPLATES.map((template) => (
+                      <button
+                        key={template.name}
+                        onClick={() => {
+                          setOriginalPrompt(template.prompt);
+                          setShowTemplates(false);
+                        }}
+                        className="text-left p-3 bg-zinc-900 hover:bg-zinc-800 rounded-lg border border-zinc-800 hover:border-zinc-700 transition-all group"
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-lg">{template.icon}</span>
+                          <span className="text-sm font-semibold text-zinc-200 group-hover:text-white">
+                            {template.name}
+                          </span>
+                        </div>
+                        <div className="text-xs text-zinc-500">{template.category}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <Textarea
             value={originalPrompt}
             onChange={(e) => setOriginalPrompt(e.target.value)}
             placeholder="Paste your prompt here..."
             className="min-h-[200px] bg-black border-zinc-800 resize-none"
           />
-          <div className="mt-4 flex justify-between items-center">
-            <div className="text-sm text-zinc-500">
-              {originalPrompt.length} characters
+          <div className="mt-4 flex justify-between items-center flex-wrap gap-4">
+            <div className="flex items-center gap-4 text-sm">
+              <div className="text-zinc-500">
+                {originalPrompt.length} characters
+              </div>
+              {originalPrompt && (
+                <>
+                  <div className="text-zinc-600">•</div>
+                  <div className="text-zinc-400">
+                    ~{estimateTokens(originalPrompt).toLocaleString()} tokens
+                  </div>
+                  <div className="text-zinc-600">•</div>
+                  <div className="text-zinc-400">
+                    ${estimateCost(estimateTokens(originalPrompt), settings.targetModel).toFixed(4)} estimated cost
+                  </div>
+                </>
+              )}
             </div>
             <motion.div
               whileHover={{ scale: 1.05 }}
@@ -406,10 +561,51 @@ export default function AppPage() {
 
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-semibold flex items-center gap-2">🚀 Optimized Prompt</h3>
-                  <Button onClick={handleCopy} variant="outline">
-                    Copy to Clipboard
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button onClick={handleShareToCommunity} variant="outline" className="bg-blue-950 border-blue-800 hover:bg-blue-900">
+                      🌍 Share to Community
+                    </Button>
+                    <Button onClick={handleCopy} variant="outline">
+                      📋 Copy
+                    </Button>
+                  </div>
                 </div>
+
+                {/* Token & Cost Comparison */}
+                {optimizedPrompt && (
+                  <div className="mb-4 grid md:grid-cols-3 gap-3">
+                    <div className="bg-zinc-950/50 p-3 rounded-lg border border-zinc-800">
+                      <div className="text-xs text-zinc-500 mb-1">Tokens</div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-red-400 text-sm">{estimateTokens(originalPrompt)}</span>
+                        <span className="text-zinc-600">→</span>
+                        <span className="text-green-400 text-sm">{estimateTokens(optimizedPrompt)}</span>
+                      </div>
+                    </div>
+                    <div className="bg-zinc-950/50 p-3 rounded-lg border border-zinc-800">
+                      <div className="text-xs text-zinc-500 mb-1">Est. Cost</div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-red-400 text-sm">
+                          ${estimateCost(estimateTokens(originalPrompt), settings.targetModel).toFixed(4)}
+                        </span>
+                        <span className="text-zinc-600">→</span>
+                        <span className="text-green-400 text-sm">
+                          ${estimateCost(estimateTokens(optimizedPrompt), settings.targetModel).toFixed(4)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="bg-gradient-to-br from-green-950/30 to-zinc-950/50 p-3 rounded-lg border border-green-900/30">
+                      <div className="text-xs text-green-400 mb-1">Savings</div>
+                      <div className="text-green-300 text-sm font-semibold">
+                        {estimateTokens(originalPrompt) > estimateTokens(optimizedPrompt)
+                          ? `${estimateTokens(originalPrompt) - estimateTokens(optimizedPrompt)} tokens`
+                          : `+${estimateTokens(optimizedPrompt) - estimateTokens(originalPrompt)} tokens (more detailed)`
+                        }
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="bg-black p-4 rounded-lg border border-zinc-800">
                   <pre className="text-zinc-300 whitespace-pre-wrap font-mono text-sm">
                     {optimizedPrompt}

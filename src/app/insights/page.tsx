@@ -74,6 +74,9 @@ export default function InsightsPage() {
             <Link href="/app">
               <Button variant="ghost">Optimize</Button>
             </Link>
+            <Link href="/community">
+              <Button variant="ghost">Community</Button>
+            </Link>
             <Link href="/history">
               <Button variant="ghost">History</Button>
             </Link>
