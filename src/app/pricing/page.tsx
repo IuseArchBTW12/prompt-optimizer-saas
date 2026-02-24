@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
+import PageTransition from "@/components/PageTransition";
 
 export default function PricingPage() {
   const { user } = useUser();
@@ -19,10 +20,11 @@ export default function PricingPage() {
     window.location.href = `/account?upgrade=${plan}`;
   };
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black">
-      {/* Header */}
-      <header className="border-b border-zinc-800">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+    <PageTransition>
+      <div className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black">
+        {/* Header */}
+        <header className="border-b border-zinc-800">
+          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/">
             <h1 className="text-2xl font-bold cursor-pointer">PromptFix</h1>
           </Link>
@@ -342,6 +344,7 @@ export default function PricingPage() {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </PageTransition>
   );
 }

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { motion } from "framer-motion";
+import PageTransition from "@/components/PageTransition";
 
 export default function InsightsPage() {
   const { user, isLoaded } = useUser();
@@ -63,10 +64,11 @@ export default function InsightsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black">
-      {/* Header */}
-      <header className="border-b border-zinc-800">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+    <PageTransition>
+      <div className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black">
+        {/* Header */}
+        <header className="border-b border-zinc-800">
+          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/">
             <h1 className="text-2xl font-bold cursor-pointer">PromptFix</h1>
           </Link>
@@ -392,6 +394,7 @@ export default function InsightsPage() {
           </div>
         )}
       </main>
-    </div>
+      </div>
+    </PageTransition>
   );
 }

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 import { motion } from "framer-motion";
+import PageTransition from "@/components/PageTransition";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -25,9 +26,10 @@ export default function Home() {
   const { isSignedIn, isLoaded } = useUser();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black" suppressHydrationWarning>
-      {/* Header */}
-      <motion.header 
+    <PageTransition>
+      <div className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black" suppressHydrationWarning>
+        {/* Header */}
+        <motion.header 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -702,6 +704,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </PageTransition>
   );
 }

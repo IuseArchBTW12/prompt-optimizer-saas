@@ -18,6 +18,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import PageTransition from "@/components/PageTransition";
 
 // Prompt templates
 const PROMPT_TEMPLATES = [
@@ -209,6 +210,7 @@ export default function AppPage() {
   };
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black">
       {/* Header */}
       <header className="border-b border-zinc-800">
@@ -690,5 +692,6 @@ export default function AppPage() {
         </AnimatePresence>
       </main>
     </div>
+    </PageTransition>
   );
 }

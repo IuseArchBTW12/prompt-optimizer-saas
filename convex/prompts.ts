@@ -387,8 +387,25 @@ export const postToCommunity = mutation({
       ...args,
       likes: [],
       likeCount: 0,
+      commentCount: 0,
+      repostCount: 0,
+      viewCount: 0,
+      bookmarks: [],
       timestamp: Date.now(),
     });
+    
+    // Update user profile post count
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+    
+    if (profile) {
+      await ctx.db.patch(profile._id, {
+        postCount: profile.postCount + 1,
+      });
+    }
+    
     return postId;
   },
 });
@@ -449,5 +466,479 @@ export const getUserCommunityPosts = query({
       .order("desc")
       .take(50);
     return posts;
+  },
+});
+
+// ============= PROFILE SYSTEM =============
+
+// Get or create user profile
+export const getOrCreateProfile = mutation({
+  args: {
+    userId: v.string(),
+    userName: v.string(),
+    userAvatar: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+    
+    if (existing) return existing;
+    
+    const profileId = await ctx.db.insert("userProfiles", {
+      userId: args.userId,
+      userName: args.userName,
+      userAvatar: args.userAvatar,
+      joinDate: Date.now(),
+      followerCount: 0,
+      followingCount: 0,
+      postCount: 0,
+    });
+    
+    return await ctx.db.get(profileId);
+  },
+});
+
+// Get user profile
+export const getUserProfile = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+    return profile;
+  },
+});
+
+// Update user profile
+export const updateProfile = mutation({
+  args: {
+    userId: v.string(),
+    bio: v.optional(v.string()),
+    location: v.optional(v.string()),
+    website: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+    
+    if (!profile) throw new Error("Profile not found");
+    
+    await ctx.db.patch(profile._id, {
+      bio: args.bio,
+      location: args.location,
+      website: args.website,
+    });
+  },
+});
+
+// ============= FOLLOW SYSTEM =============
+
+// Follow a user
+export const followUser = mutation({
+  args: {
+    followerId: v.string(),
+    followingId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    if (args.followerId === args.followingId) {
+      throw new Error("Cannot follow yourself");
+    }
+    
+    // Check if already following
+    const existing = await ctx.db
+      .query("follows")
+      .withIndex("by_relationship", (q) => 
+        q.eq("followerId", args.followerId).eq("followingId", args.followingId)
+      )
+      .first();
+    
+    if (existing) return; // Already following
+    
+    // Create follow relationship
+    await ctx.db.insert("follows", {
+      followerId: args.followerId,
+      followingId: args.followingId,
+      timestamp: Date.now(),
+    });
+    
+    // Update follower's following count
+    const followerProfile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user", (q) => q.eq("userId", args.followerId))
+      .first();
+    if (followerProfile) {
+      await ctx.db.patch(followerProfile._id, {
+        followingCount: followerProfile.followingCount + 1,
+      });
+    }
+    
+    // Update followed user's follower count
+    const followingProfile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user", (q) => q.eq("userId", args.followingId))
+      .first();
+    if (followingProfile) {
+      await ctx.db.patch(followingProfile._id, {
+        followerCount: followingProfile.followerCount + 1,
+      });
+    }
+  },
+});
+
+// Unfollow a user
+export const unfollowUser = mutation({
+  args: {
+    followerId: v.string(),
+    followingId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const follow = await ctx.db
+      .query("follows")
+      .withIndex("by_relationship", (q) => 
+        q.eq("followerId", args.followerId).eq("followingId", args.followingId)
+      )
+      .first();
+    
+    if (!follow) return; // Not following
+    
+    await ctx.db.delete(follow._id);
+    
+    // Update counts
+    const followerProfile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user", (q) => q.eq("userId", args.followerId))
+      .first();
+    if (followerProfile) {
+      await ctx.db.patch(followerProfile._id, {
+        followingCount: Math.max(0, followerProfile.followingCount - 1),
+      });
+    }
+    
+    const followingProfile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user", (q) => q.eq("userId", args.followingId))
+      .first();
+    if (followingProfile) {
+      await ctx.db.patch(followingProfile._id, {
+        followerCount: Math.max(0, followingProfile.followerCount - 1),
+      });
+    }
+  },
+});
+
+// Check if following
+export const isFollowing = query({
+  args: {
+    followerId: v.string(),
+    followingId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const follow = await ctx.db
+      .query("follows")
+      .withIndex("by_relationship", (q) => 
+        q.eq("followerId", args.followerId).eq("followingId", args.followingId)
+      )
+      .first();
+    return !!follow;
+  },
+});
+
+// Get followers
+export const getFollowers = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const follows = await ctx.db
+      .query("follows")
+      .withIndex("by_following", (q) => q.eq("followingId", args.userId))
+      .collect();
+    
+    const followers = await Promise.all(
+      follows.map(async (follow) => {
+        const profile = await ctx.db
+          .query("userProfiles")
+          .withIndex("by_user", (q) => q.eq("userId", follow.followerId))
+          .first();
+        return profile;
+      })
+    );
+    
+    return followers.filter(Boolean);
+  },
+});
+
+// Get following
+export const getFollowing = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const follows = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", args.userId))
+      .collect();
+    
+    const following = await Promise.all(
+      follows.map(async (follow) => {
+        const profile = await ctx.db
+          .query("userProfiles")
+          .withIndex("by_user", (q) => q.eq("userId", follow.followingId))
+          .first();
+        return profile;
+      })
+    );
+    
+    return following.filter(Boolean);
+  },
+});
+
+// Get following feed
+export const getFollowingFeed = query({
+  args: {
+    userId: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 50;
+    
+    // Get list of users being followed
+    const follows = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", args.userId))
+      .collect();
+    
+    const followingIds = follows.map(f => f.followingId);
+    
+    // Get all posts
+    const allPosts = await ctx.db
+      .query("communityPrompts")
+      .withIndex("by_timestamp")
+      .order("desc")
+      .take(200);
+    
+    // Filter to only following users' posts
+    const filteredPosts = allPosts.filter(post => 
+      followingIds.includes(post.userId)
+    );
+    
+    return filteredPosts.slice(0, limit);
+  },
+});
+
+// ============= COMMENTS SYSTEM =============
+
+// Add comment
+export const addComment = mutation({
+  args: {
+    postId: v.id("communityPrompts"),
+    userId: v.string(),
+    userName: v.string(),
+    userAvatar: v.optional(v.string()),
+    content: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const commentId = await ctx.db.insert("comments", {
+      postId: args.postId,
+      userId: args.userId,
+      userName: args.userName,
+      userAvatar: args.userAvatar,
+      content: args.content,
+      likes: [],
+      likeCount: 0,
+      timestamp: Date.now(),
+    });
+    
+    // Update post comment count
+    const post = await ctx.db.get(args.postId);
+    if (post) {
+      await ctx.db.patch(args.postId, {
+        commentCount: post.commentCount + 1,
+      });
+    }
+    
+    return commentId;
+  },
+});
+
+// Get comments for a post
+export const getComments = query({
+  args: { postId: v.id("communityPrompts") },
+  handler: async (ctx, args) => {
+    const comments = await ctx.db
+      .query("comments")
+      .withIndex("by_post", (q) => q.eq("postId", args.postId))
+      .order("desc")
+      .collect();
+    return comments;
+  },
+});
+
+// Toggle comment like
+export const toggleCommentLike = mutation({
+  args: {
+    commentId: v.id("comments"),
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const comment = await ctx.db.get(args.commentId);
+    if (!comment) throw new Error("Comment not found");
+
+    const hasLiked = comment.likes.includes(args.userId);
+    
+    if (hasLiked) {
+      await ctx.db.patch(args.commentId, {
+        likes: comment.likes.filter(id => id !== args.userId),
+        likeCount: comment.likeCount - 1,
+      });
+    } else {
+      await ctx.db.patch(args.commentId, {
+        likes: [...comment.likes, args.userId],
+        likeCount: comment.likeCount + 1,
+      });
+    }
+    
+    return !hasLiked;
+  },
+});
+
+// ============= REPOST SYSTEM =============
+
+// Repost
+export const repostPost = mutation({
+  args: {
+    postId: v.id("communityPrompts"),
+    userId: v.string(),
+    userName: v.string(),
+    userAvatar: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const post = await ctx.db.get(args.postId);
+    if (!post) throw new Error("Post not found");
+    
+    // Check if already reposted
+    const existing = await ctx.db
+      .query("reposts")
+      .withIndex("by_post", (q) => q.eq("postId", args.postId))
+      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .first();
+    
+    if (existing) throw new Error("Already reposted");
+    
+    const repostId = await ctx.db.insert("reposts", {
+      postId: args.postId,
+      userId: args.userId,
+      userName: args.userName,
+      userAvatar: args.userAvatar,
+      originalPostUserId: post.userId,
+      timestamp: Date.now(),
+    });
+    
+    // Update post repost count
+    await ctx.db.patch(args.postId, {
+      repostCount: post.repostCount + 1,
+    });
+    
+    return repostId;
+  },
+});
+
+// Delete repost
+export const deleteRepost = mutation({
+  args: {
+    postId: v.id("communityPrompts"),
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const repost = await ctx.db
+      .query("reposts")
+      .withIndex("by_post", (q) => q.eq("postId", args.postId))
+      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .first();
+    
+    if (!repost) return;
+    
+    await ctx.db.delete(repost._id);
+    
+    const post = await ctx.db.get(args.postId);
+    if (post) {
+      await ctx.db.patch(args.postId, {
+        repostCount: Math.max(0, post.repostCount - 1),
+      });
+    }
+  },
+});
+
+// Check if user reposted
+export const hasReposted = query({
+  args: {
+    postId: v.id("communityPrompts"),
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const repost = await ctx.db
+      .query("reposts")
+      .withIndex("by_post", (q) => q.eq("postId", args.postId))
+      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .first();
+    return !!repost;
+  },
+});
+
+// ============= BOOKMARKS =============
+
+// Toggle bookmark
+export const toggleBookmark = mutation({
+  args: {
+    postId: v.id("communityPrompts"),
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const post = await ctx.db.get(args.postId);
+    if (!post) throw new Error("Post not found");
+
+    const hasBookmarked = post.bookmarks.includes(args.userId);
+    
+    if (hasBookmarked) {
+      await ctx.db.patch(args.postId, {
+        bookmarks: post.bookmarks.filter(id => id !== args.userId),
+      });
+    } else {
+      await ctx.db.patch(args.postId, {
+        bookmarks: [...post.bookmarks, args.userId],
+      });
+    }
+    
+    return !hasBookmarked;
+  },
+});
+
+// Get bookmarked posts
+export const getBookmarkedPosts = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const allPosts = await ctx.db
+      .query("communityPrompts")
+      .withIndex("by_timestamp")
+      .order("desc")
+      .take(200);
+    
+    return allPosts.filter(post => post.bookmarks.includes(args.userId));
+  },
+});
+
+// ============= VIEW TRACKING =============
+
+// Increment views
+export const incrementViews = mutation({
+  args: { postId: v.id("communityPrompts") },
+  handler: async (ctx, args) => {
+    const post = await ctx.db.get(args.postId);
+    if (!post) return;
+    
+    await ctx.db.patch(args.postId, {
+      viewCount: post.viewCount + 1,
+    });
   },
 });
